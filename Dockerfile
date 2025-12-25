@@ -1,26 +1,21 @@
-# 使用官方 Python 3.11 的轻量版镜像
+# syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
-LABEL maintainer="Evil0ctal"
+LABEL maintainer="mmazurovsky"
 
-# 设置非交互模式，避免 Docker 构建时的交互问题
-ENV DEBIAN_FRONTEND=noninteractive
-
-# 设置工作目录
 WORKDIR /app
 
-# 复制应用代码到容器
+# Copy the entire project
 COPY . /app
 
-# 使用 Aliyun 镜像源加速 pip
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ -U pip \
-    && pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
-
-# 安装依赖
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 确保启动脚本可执行
-RUN chmod +x start.sh
+# Set Python path to include app directory
+ENV PYTHONPATH=/app
 
-# 设置容器启动命令
-CMD ["./start.sh"]
+# Expose port (default is 80 from config.yaml)
+EXPOSE 80
+
+# Start the application using uvicorn directly
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--timeout-keep-alive", "300", "--timeout-graceful-shutdown", "300"]
